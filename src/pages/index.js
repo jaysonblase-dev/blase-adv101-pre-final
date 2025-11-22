@@ -15,6 +15,9 @@ export default function Home() {
   const [todos, setTodos] = useState([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   // Sample initial data matching your screenshot
   useEffect(() => {
@@ -84,12 +87,59 @@ export default function Home() {
 
   const toggleTodo = (id) => {
     setTodos(todos.map(todo => 
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      todo.id === id ? { 
+        ...todo, 
+        completed: !todo.completed,
+        date: new Date().toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        })
+      } : todo
     ));
   };
 
   const deleteTodo = (id) => {
     setTodos(todos.filter(todo => todo.id !== id));
+  };
+
+  const startEditing = (todo) => {
+    setEditingId(todo.id);
+    setEditTitle(todo.title);
+    setEditDescription(todo.description);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditTitle("");
+    setEditDescription("");
+  };
+
+  const saveEdit = (id) => {
+    if (!editTitle.trim()) return;
+
+    setTodos(todos.map(todo => 
+      todo.id === id ? { 
+        ...todo, 
+        title: editTitle,
+        description: editDescription,
+        date: new Date().toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        })
+      } : todo
+    ));
+
+    setEditingId(null);
+    setEditTitle("");
+    setEditDescription("");
   };
 
   return (
@@ -162,7 +212,7 @@ export default function Home() {
                     Date Created/Updated
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Action
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -178,21 +228,68 @@ export default function Home() {
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{todo.title}</div>
+                      {editingId === todo.id ? (
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                      ) : (
+                        <div className={`text-sm font-medium ${todo.completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                          {todo.title}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-500 max-w-xs">{todo.description}</div>
+                      {editingId === todo.id ? (
+                        <textarea
+                          value={editDescription}
+                          onChange={(e) => setEditDescription(e.target.value)}
+                          rows="2"
+                          className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                      ) : (
+                        <div className={`text-sm ${todo.completed ? 'text-gray-400 line-through' : 'text-gray-500'} max-w-xs`}>
+                          {todo.description}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">{todo.date}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => deleteTodo(todo.id)}
-                        className="text-red-600 hover:text-red-900 focus:outline-none"
-                      >
-                        Delete
-                      </button>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                      {editingId === todo.id ? (
+                        <>
+                          <button
+                            onClick={() => saveEdit(todo.id)}
+                            className="text-green-600 hover:text-green-900 focus:outline-none"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={cancelEditing}
+                            className="text-gray-600 hover:text-gray-900 focus:outline-none"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => startEditing(todo)}
+                            className="text-blue-600 hover:text-blue-900 focus:outline-none"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteTodo(todo.id)}
+                            className="text-red-600 hover:text-red-900 focus:outline-none"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
